@@ -104,6 +104,9 @@
 <p align="center">
   <img src="docs/image1.png" alt="Preview 1" width="320"/>
   <img src="docs/image2.png" alt="Preview 2" width="320"/>
+  <img src="docs/image3.jpg" alt="Preview 3" width="320"/>
+  <img src="docs/image4.jpg" alt="Preview 4" width="320"/>
+  <img src="docs/image5.jpg" alt="Preview 5" width="320"/>
 </p>
 ---
 

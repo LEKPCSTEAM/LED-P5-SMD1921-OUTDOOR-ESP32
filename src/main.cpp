@@ -164,8 +164,8 @@ void showName()
   virtualDisp->setTextSize(1);
 
   virtualDisp->setCursor(2, 2);
-  virtualDisp->setTextColor(virtualDisp->color565(255, 0, 0));
-  virtualDisp->print("LED P5 OUTDOOR SMD1921  \n@LEKPCSTEAM");
+  virtualDisp->setTextColor(virtualDisp->color565(0, 255, 0));
+  virtualDisp->print("LED P5 OUTDOOR\nSMD1921 @LEKPCSTEAM");
 }
 
 void showColorfulText()
@@ -176,13 +176,13 @@ void showColorfulText()
   // แต่ละตัวอักษรสีต่างกัน
   String text = "RAINBOW";
   uint16_t colors[] = {
-      virtualDisp->color565(255, 0, 0),    // แดง
-      virtualDisp->color565(255, 165, 0),  // ส้ม
-      virtualDisp->color565(255, 255, 0),  // เหลือง
-      virtualDisp->color565(0, 255, 0),    // เขียว
-      virtualDisp->color565(0, 0, 255),    // น้ำเงิน
-      virtualDisp->color565(75, 0, 130),   // คราม
-      virtualDisp->color565(238, 130, 238) // ม่วง
+      virtualDisp->color565(255, 0, 0),    
+      virtualDisp->color565(255, 165, 0), 
+      virtualDisp->color565(255, 255, 0), 
+      virtualDisp->color565(0, 255, 0),    
+      virtualDisp->color565(0, 0, 255),   
+      virtualDisp->color565(75, 0, 130),  
+      virtualDisp->color565(238, 130, 238)
   };
 
   for (int i = 0; i < text.length(); i++)
@@ -198,7 +198,6 @@ void showClock()
   virtualDisp->clearScreen();
   virtualDisp->setTextSize(1);
 
-  // จำลองนาฬิกา
   virtualDisp->setCursor(8, 5);
   virtualDisp->setTextColor(virtualDisp->color565(0, 255, 255));
   virtualDisp->print("TIME");
@@ -212,60 +211,79 @@ void showClock()
 void showTemperature()
 {
   virtualDisp->clearScreen();
-  virtualDisp->setTextSize(1);
 
-  virtualDisp->setCursor(12, 2);
+  virtualDisp->setTextSize(1);
   virtualDisp->setTextColor(virtualDisp->color565(255, 100, 0));
+  virtualDisp->setCursor(12, 2);
   virtualDisp->print("TEMP");
 
+  float temp = temperatureRead();
+  String tempStr = String((int)temp);  
+  String fullStr = tempStr + "°C";
+
+  int textSize = 2;
+  int charWidth = 6 * textSize;
+  int strWidth = fullStr.length() * charWidth;
+  int x = (virtualDisp->width() - strWidth) / 2;
+
   virtualDisp->setTextSize(2);
-  virtualDisp->setCursor(8, 12);
   virtualDisp->setTextColor(virtualDisp->color565(255, 0, 0));
-   
-  virtualDisp->print("" + String(temperatureRead()));
+  virtualDisp->setCursor(x, 14);   
+  virtualDisp->print(tempStr);
 
+  int degree_x = x + tempStr.length() * charWidth;
   virtualDisp->setTextSize(1);
-  virtualDisp->setCursor(40, 12);
   virtualDisp->setTextColor(virtualDisp->color565(255, 255, 0));
-  virtualDisp->print("o");
-  virtualDisp->setCursor(46, 18);
-  virtualDisp->print("C");
+  virtualDisp->setCursor(degree_x, 18);
+  virtualDisp->print("°C");
 }
 
-void showStatus()
-{
-  virtualDisp->clearScreen();
-  virtualDisp->setTextSize(1);
 
-  virtualDisp->setCursor(2, 2);
-  virtualDisp->setTextColor(virtualDisp->color565(0, 255, 0));
-  virtualDisp->print("WIFI: ON");
+enum ScrollDir {
+  LEFT,   // ← 
+  RIGHT,  // → 
+  UP,     // ↑ 
+  DOWN    // ↓ 
+};
 
-  virtualDisp->setCursor(2, 12);
-  virtualDisp->setTextColor(virtualDisp->color565(255, 255, 0));
-  virtualDisp->print("CPU: 85%");
+void showScrollingBannerFor(VirtualMatrixPanel* disp, String banner, ScrollDir dir = LEFT, int step = 2, int delay_ms = 20) {
+  int banner_width = banner.length() * 6; 
+  int banner_height = 8;
 
-  virtualDisp->setCursor(2, 22);
-  virtualDisp->setTextColor(virtualDisp->color565(0, 150, 255));
-  virtualDisp->print("MEM: 4.2GB");
-}
+  disp->setTextSize(1);
+  disp->setTextColor(disp->color565(255, 50, 150));
 
-void showScrollingBanner()
-{
-  String banner = "    Welcome to LED Matrix Display!    ";
-  virtualDisp->setTextSize(1);
-  virtualDisp->setTextColor(virtualDisp->color565(255, 50, 150));
-
-  static int scroll_pos = PANEL_RES_X;
-
-  virtualDisp->clearScreen();
-  virtualDisp->setCursor(scroll_pos, 12);
-  virtualDisp->print(banner);
-
-  scroll_pos -= 2;
-  if (scroll_pos < -(banner.length() * 6))
-  {
-    scroll_pos = PANEL_RES_X;
+  if (dir == LEFT) {
+    for (int x = disp->width(); x >= -banner_width; x -= step) {
+      disp->clearScreen();
+      disp->setCursor(x, disp->height()/2 - 4);
+      disp->print(banner);
+      delay(delay_ms);
+    }
+  }
+  else if (dir == RIGHT) {
+    for (int x = -banner_width; x <= disp->width(); x += step) {
+      disp->clearScreen();
+      disp->setCursor(x, disp->height()/2 - 4);
+      disp->print(banner);
+      delay(delay_ms);
+    }
+  }
+  else if (dir == UP) {
+    for (int y = disp->height(); y >= -banner_height; y -= 1) {
+      disp->clearScreen();
+      disp->setCursor((disp->width() - banner_width)/2, y);
+      disp->print(banner);
+      delay(delay_ms);
+    }
+  }
+  else if (dir == DOWN) {
+    for (int y = -banner_height; y <= disp->height(); y += 1) {
+      disp->clearScreen();
+      disp->setCursor((disp->width() - banner_width)/2, y);
+      disp->print(banner);
+      delay(delay_ms);
+    }
   }
 }
 
@@ -377,7 +395,7 @@ void loop()
   static int test_mode = 0;
   static unsigned long last_change = 0;
 
-  if (millis() - last_change > 8000)
+  if (millis() - last_change > 3000)
   {
     virtualDisp->clearScreen();
     switch (test_mode)
@@ -403,24 +421,20 @@ void loop()
       showTemperature();
       break;
     case 5:
-      Serial.println("Loop Test: Status Messages");
-      showStatus();
+      Serial.println("Loop Test: Scrolling Banner");
+      showScrollingBannerFor(virtualDisp, "LEKPCSTEAM", LEFT);
       break;
     case 6:
-      Serial.println("Loop Test: Scrolling Banner");
-      showScrollingBanner();
-      break;
-    case 7:
       Serial.println("Loop Test: Pattern + Text");
       showPatternWithText();
       break;
-    case 8:
+    case 7:
       Serial.println("Loop Test: Pattern");
       testDisplay();
       break;
     }
 
-    test_mode = (test_mode + 1) % 9;
+    test_mode = (test_mode + 1) % 8;
     last_change = millis();
   }
 }
